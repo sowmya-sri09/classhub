@@ -1,16 +1,3 @@
-There were no significant bugs in your code, but I've updated it to improve readability, fix a few potential issues, and make it more robust.
-
-Here's a summary of the key changes:
-
-  * **Fixed the `ttt_state` reset:** The `ttt_state` was being reset incorrectly. I've fixed the logic to ensure the game state is cleared properly after a winner or a draw.
-  * **Improved poll handling:** The poll creation logic was slightly ambiguous; I've clarified the code to ensure it handles the options and votes correctly.
-  * **Added error handling for database operations:** I've added more explicit `try...except` blocks and added `conn.close()` in `finally` blocks to ensure the database connection is always closed, preventing potential resource leaks.
-  * **Code formatting and comments:** The code has been re-formatted for better readability and key sections now have comments to explain their purpose.
-  * **Explicit `if __name__ == "__main__":` block:** The main run block has been made more explicit to ensure it only runs when the script is executed directly.
-
-Here is the updated code:
-
-```python
 import os
 import json
 import sqlite3
