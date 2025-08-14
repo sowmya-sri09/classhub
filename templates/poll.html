@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Live Polls</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-3">
+<div class="container">
+  <h4>Live Polls</h4>
+  <form class="row g-2" action="/create-poll" method="post">
+    <div class="col-5"><input class="form-control" name="question" placeholder="Question?" required></div>
+    <div class="col-3"><input class="form-control" name="options" placeholder="Option A" required></div>
+    <div class="col-3"><input class="form-control" name="options" placeholder="Option B" required></div>
+    <div class="col-1"><button class="btn btn-primary w-100">Add</button></div>
+  </form>
+  <hr>
+  {% for p in polls %}
+    <div class="card p-2 mb-2">
+      <div><b>{{p.question}}</b></div>
+      <form class="voteForm d-flex gap-2 mt-2">
+        <input type="hidden" name="poll_id" value="{{p.id}}">
+        <input type="hidden" name="nickname" value="{{nickname}}">
+        {% for opt in p.options %}
+          <button name="opt_idx" value="{{loop.index0}}" class="btn btn-outline-dark btn-sm">{{opt}}</button>
+        {% endfor %}
+      </form>
+      <div class="small text-muted" id="v{{p.id}}">Votes: {{p.votes}}</div>
+    </div>
+  {% endfor %}
+  <a href="/dashboard?nickname={{nickname}}" class="btn btn-outline-secondary btn-sm mt-2">Back</a>
+</div>
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  const socket = io();
+  $('.voteForm').on('click', 'button', function(e){
+    e.preventDefault();
+    const form = $(this).closest('form');
+    $.post('/vote', {
+      poll_id: form.find('input[name=poll_id]').val(),
+      opt_idx: $(this).val(),
+      nickname: form.find('input[name=nickname]').val()
+    });
+  });
+  socket.on('poll-updated', d=>{
+    const el = document.getElementById('v'+d.poll_id);
+    el.textContent = 'Votes: '+JSON.stringify(d.votes);
+  });
+  socket.on('poll-created', ()=> location.reload());
+</script>
+</body>
+</html>

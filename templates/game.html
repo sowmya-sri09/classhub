@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mini Games</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="p-3">
+<div class="container">
+  <h4>Mini Games — Welcome {{nickname}}</h4>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card p-3 rounded-4 shadow-sm">
+        <h5>Rock Paper Scissors</h5>
+        <div class="input-group mb-2">
+          <span class="input-group-text">Room</span>
+          <input id="rpsRoom" class="form-control" value="rps1">
+          <button class="btn btn-primary" id="rpsJoin">Join</button>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-dark" data-m="rock">Rock 🪨</button>
+          <button class="btn btn-outline-dark" data-m="paper">Paper 📄</button>
+          <button class="btn btn-outline-dark" data-m="scissors">Scissors ✂️</button>
+        </div>
+        <div id="rpsLog" class="mt-2 small text-muted"></div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card p-3 rounded-4 shadow-sm">
+        <h5>Tic Tac Toe</h5>
+        <div class="input-group mb-2">
+          <span class="input-group-text">Room</span>
+          <input id="tttRoom" class="form-control" value="ttt1">
+          <button class="btn btn-primary" id="tttJoin">Join</button>
+        </div>
+        <div id="board" class="ttt-grid"></div>
+        <div id="tttInfo" class="mt-2 small text-muted"></div>
+      </div>
+    </div>
+  </div>
+  <a class="btn btn-outline-secondary btn-sm mt-3" href="/dashboard?nickname={{nickname}}">Back</a>
+</div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  const nickname = "{{nickname}}";
+  const socket = io();
+
+  // RPS
+  document.getElementById('rpsJoin').onclick = ()=>{
+    const room = document.getElementById('rpsRoom').value || 'rps';
+    socket.emit('rps-join', {room, nickname});
+    document.querySelectorAll('[data-m]').forEach(btn=>{
+      btn.onclick = ()=> socket.emit('rps-move', {room, nickname, move: btn.dataset.m});
+    });
+  };
+  const rpsLog = t => document.getElementById('rpsLog').insertAdjacentHTML('beforeend','<div>'+t+'</div>');
+  socket.on('rps-status', d=> rpsLog(d.msg));
+  socket.on('rps-result', d=> rpsLog('Result: '+d.result));
+
+  // TTT
+  let tttRoom = 'ttt1';
+  function drawBoard(arr){
+    const b = document.getElementById('board');
+    b.innerHTML = '';
+    for(let i=0;i<9;i++){
+      const cell = document.createElement('div');
+      cell.className='ttt-cell';
+      cell.textContent = arr[i] || '';
+      cell.onclick = ()=> socket.emit('ttt-move', {room: tttRoom, idx: i, nickname});
+      b.appendChild(cell);
+    }
+  }
+  document.getElementById('tttJoin').onclick = ()=>{
+    tttRoom = document.getElementById('tttRoom').value || 'ttt';
+    socket.emit('ttt-join', {room: tttRoom, nickname});
+  };
+  socket.on('ttt-state', d=>{
+    drawBoard(d.board);
+    document.getElementById('tttInfo').textContent = d.winner
+      ? ('Winner: '+d.winner)
+      : ('Turn: '+d.turn+' | Players: '+JSON.stringify(d.players));
+  });
+</script>
+</body>
+</html>

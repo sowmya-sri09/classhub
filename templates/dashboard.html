@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ClassHub — Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="p-3">
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center">
+    <h3>Welcome, <span class="badge bg-dark" id="nickname">{{ nickname }}</span></h3>
+    <div class="btn-group">
+      <a class="btn btn-outline-secondary btn-sm" href="/polls?nickname={{nickname}}">Polls</a>
+      <a class="btn btn-outline-secondary btn-sm" href="/games?nickname={{nickname}}">Mini Games</a>
+      <a class="btn btn-outline-secondary btn-sm" href="/fake">Fake Teacher</a>
+    </div>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col-md-6">
+      <div class="card p-3 rounded-4 shadow-sm">
+        <h5>Team Battle</h5>
+        {% set total = boys + girls if (boys+girls)>0 else 1 %}
+        <div class="progress">
+          <div class="progress-bar bg-info" style="width: {{ (boys/total*100)|round(0) }}%">Boys {{boys}}</div>
+          <div class="progress-bar bg-pink" style="width: {{ (girls/total*100)|round(0) }}%">Girls {{girls}}</div>
+        </div>
+      </div>
+
+      <div class="card p-3 rounded-4 shadow-sm mt-3">
+        <h5>Attendance</h5>
+        <form id="attForm">
+          <input type="hidden" name="nickname" value="{{nickname}}">
+          <div class="row g-2">
+            <div class="col-8"><input class="form-control" name="session" placeholder="Session name" value="Lab Period"></div>
+            <div class="col-4"><button class="btn btn-primary w-100">Mark +5</button></div>
+          </div>
+        </form>
+        <div id="attInfo" class="small text-muted mt-2"></div>
+        <a class="btn btn-sm btn-outline-success mt-2" href="/export-attendance">Export CSV</a>
+      </div>
+
+      <div class="card p-3 rounded-4 shadow-sm mt-3">
+        <h5>Upload Meme / Notes (image)</h5>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+          <input type="file" name="file" accept="image/*" class="form-control mb-2" required>
+          <input type="hidden" name="nickname" value="{{nickname}}">
+          <button class="btn btn-dark">Upload</button>
+        </form>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          {% for u in uploads %}
+            <div class="text-center">
+              <img src="/memes/{{u['filename']}}" style="max-width:120px;border-radius:12px">
+              <div class="small text-muted">by {{u['uploader']}}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card p-3 rounded-4 shadow-sm">
+        <h5>Live Chat</h5>
+        <div class="input-group mb-2">
+          <span class="input-group-text">Room</span>
+          <select id="room" class="form-select">
+            <option value="main">Main</option>
+            <option value="girls">Girls</option>
+            <option value="boys">Boys</option>
+          </select>
+          <button class="btn btn-primary" id="joinBtn">Join</button>
+          <button class="btn btn-outline-dark" id="fakeBtn">Fake (Ctrl+Q)</button>
+        </div>
+        <div id="msgs" class="border p-2 rounded-3 bg-light chat-box"></div>
+        <div class="input-group mt-2">
+          <input id="msgInput" class="form-control" placeholder="Type message...">
+          <button class="btn btn-success" id="sendBtn">Send</button>
+        </div>
+        <div class="d-flex gap-2 mt-2">
+          <button class="btn btn-outline-secondary btn-sm" id="truthBtn">Truth/Dare</button>
+          <button class="btn btn-outline-warning btn-sm" id="emojiBtn">Send 😂</button>
+          <button class="btn btn-outline-info btn-sm" id="teamsBtn">Random Teams</button>
+          <button class="btn btn-outline-dark btn-sm" id="invisibleBtn">Invisible Ink</button>
+        </div>
+      </div>
+
+      <div class="card p-3 rounded-4 shadow-sm mt-3">
+        <h5>Leaderboard (Top)</h5>
+        <ol class="mb-0">
+        {% for u in users[:10] %}
+          <li>{{u['nickname']}} — <b>{{u['points']}} pts</b> <span class="text-muted">({{u['team']}})</span></li>
+        {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+
