@@ -282,7 +282,6 @@ def vote():
             return jsonify(ok=False, error="Poll not found"), 404
 
         votes = json.loads(row["votes"])
-        # safe key: opt_idx must be string key present in votes
         key = str(opt_idx)
         votes[key] = votes.get(key, 0) + 1
 
@@ -482,7 +481,7 @@ def chatbot_query():
 # ---------- MAIN ----------
 if __name__ == "__main__":
     init_db()
-    socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    socketio.run(app, host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=True)
 
 
 
