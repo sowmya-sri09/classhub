@@ -1,19 +1,23 @@
 # main.py
-import eventlet
-eventlet.monkey_patch()  # MUST be done before importing things that use sockets/threads
 
+# --- Eventlet monkey-patch (must be first!) ---
+import eventlet
+eventlet.monkey_patch()  # ⚠️ Keep at very top before other imports
+
+# --- Standard Libraries ---
 import os
 import json
 import sqlite3
 import datetime
 import random
 
+# --- Flask / SocketIO ---
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.utils import secure_filename
 
 # --- Configuration & Folders ---
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = os.path.abspath(os.path.dirname(__file__)) if "__file__" in globals() else os.getcwd()
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 MEME_DIR = os.path.join(STATIC_DIR, "memes")
 os.makedirs(MEME_DIR, exist_ok=True)
@@ -41,13 +45,11 @@ def now_timestamp():
     """Returns the current timestamp in a specific format."""
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
-def initialize_database():
-    """Creates the necessary tables if they don't exist."""
-    conn = get_db_connection()
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute(
-        """
+    
+    c.execute( """
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nickname TEXT UNIQUE NOT NULL,
@@ -56,38 +58,35 @@ def initialize_database():
             points INTEGER DEFAULT 0,
             joined_at TEXT
         );
-    """
-    )
-    c.execute(
-        """
+    """)
+    
+    c.execute(""" 
         CREATE TABLE IF NOT EXISTS attendance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nickname TEXT,
             session_name TEXT,
             timestamp TEXT
         );
-    """
-    )
-    c.execute(
-        """
+    """)
+    
+    c.execute( """
         CREATE TABLE IF NOT EXISTS uploads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             filename TEXT,
             uploader TEXT,
             ts TEXT
         );
-    """
-    )
-    c.execute(
-        """
+    """)
+    
+    c.execute(""" 
         CREATE TABLE IF NOT EXISTS polls (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             question TEXT,
             options TEXT,
             votes TEXT
         );
-    """
-    )
+    """ )
+    
     conn.commit()
     conn.close()
 
@@ -476,17 +475,15 @@ def chatbot_query():
     if "tcp" in q or "network" in q:
         return jsonify(answer="Focus: OSI vs TCP/IP layers, subnetting, and HTTP request flow. Try Wireshark once!")
     if "project" in q:
-        return jsonify(answer="This app itself: Attendance + Leaderboard + Polls + Games. Add QR code scanning as next step.")
-    return jsonify(answer="I'm your study buddy 🤖 — ask me about attendance, exams, networks, or your project.")
+        return jsonify(answer="Projects: Use Flask + SQLite + SocketIO for real-time interaction. Demo MVP first.")
+    return jsonify(answer="Sorry, I didn't understand. Try asking about attendance, exam, or project.")
 
 
-# ---------- RUN APPLICATION ----------
-initialize_database()
-
+# ---------- MAIN ----------
 if __name__ == "__main__":
-    initialize_database()
-    print("🚀 ClassHub running on http://localhost:5000")
-    # debug=True is convenient for development; remove or toggle for production
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    init_db()
+    socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
+
 
 
